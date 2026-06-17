@@ -27,19 +27,56 @@ export default function Home() {
     }
   }, [messages]);
 
-  const send = () => {
-    if (!input.trim()) return;
+  const send = async () => {
+  if (!input.trim()) return;
+
+  const userMessage = input.trim();
+
+  setMessages((prev) => [
+    ...prev,
+    {
+      role: 'user',
+      text: userMessage,
+    },
+  ]);
+
+  setInput('');
+
+  try {
+    const response = await fetch(
+      'https://yy-home-backend.onrender.com/chat',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+        }),
+      }
+    );
+
+    const data = await response.json();
 
     setMessages((prev) => [
       ...prev,
       {
-        role: 'user',
-        text: input.trim(),
+        role: 'ai',
+        text: data.reply,
+      },
+    ]);
+  } catch (error) {
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'ai',
+        text: '连接失败，请稍后再试。',
       },
     ]);
 
-    setInput('');
-  };
+    console.error(error);
+  }
+};
 
   return (
     <div
