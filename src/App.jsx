@@ -12,11 +12,8 @@ const palette = {
 };
 
 export default function Home() {
-  const [messages, setMessages] = useState([
-    { role: 'ai', text: '回来了。' },
-    { role: 'user', text: '嗯，到家啦~' },
-    { role: 'ai', text: '路上顺利就好，屋子先收拾，剩下的不急。' },
-  ]);
+  const [messages, setMessages] = useState([]);
+  const [history, setHistory] = useState([]);
 
   const [input, setInput] = useState('');
   const listRef = useRef(null);
@@ -27,53 +24,26 @@ export default function Home() {
     }
   }, [messages]);
 
-  const send = async () => {
-  if (!input.trim()) return;
+    const send = async () => {
+      if (!input.trim()) return;
+    const userMessage = input.trim();
+    setMessages((prev) => [...prev, { role: 'user', text: userMessage }]);
+    setInput('');
 
-  const userMessage = input.trim();
-
-  setMessages((prev) => [
-    ...prev,
-    {
-      role: 'user',
-      text: userMessage,
-    },
-  ]);
-
-  setInput('');
+    const newHistory = [...history, { role: 'user', content: userMessage }];
 
   try {
-    const response = await fetch(
-      'https://yy-home-backend.onrender.com/chat',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage,
-        }),
-      }
-    );
+    const response = await fetch('https://yy-home-backend.onrender.com/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userMessage, history }),
+    });
 
     const data = await response.json();
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: 'ai',
-        text: data.reply,
-      },
-    ]);
+    setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
+    setHistory([...newHistory, { role: 'assistant', content: data.reply }]);
   } catch (error) {
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: 'ai',
-        text: '连接失败，请稍后再试。',
-      },
-    ]);
-
+    setMessages((prev) => [...prev, { role: 'ai', text: '连接失败，请稍后再试。' }]);
     console.error(error);
   }
 };
