@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { chat } from "./api/chat";
+import { saveConversation, loadConversation } from "./utils/storage";
 
 const palette = {
   bg: '#18151a',
@@ -131,7 +132,9 @@ function HomePage({ onEnter }) {
 
 export default function App() {
   const [page, setPage] = useState('home');
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    return loadConversation();
+      });
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState('');
   const listRef = useRef(null);
@@ -141,6 +144,10 @@ export default function App() {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    saveConversation(messages);
+   }, [messages]);
 
   const send = async () => {
     if (!input.trim()) return;
