@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { chat } from "./api/chat";
 
 const palette = {
   bg: '#18151a',
@@ -148,12 +149,10 @@ export default function App() {
     setInput('');
     const newHistory = [...history, { role: 'user', content: userMessage }];
     try {
-      const response = await fetch('https://yy-home-backend.onrender.com/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, history }),
-      });
-      const data = await response.json();
+     const data = await chat(
+       userMessage,
+     history
+     );
       setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
       setHistory([...newHistory, { role: 'assistant', content: data.reply }]);
     } catch (error) {
