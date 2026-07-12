@@ -1,6 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { chat } from "./api/chat";
-import { saveConversation, loadConversation } from "./utils/storage";
+import {
+  saveConversation,
+  loadConversation,
+  saveConversations,
+  loadConversations
+} from "./utils/storage";
 
 const palette = {
   bg: '#18151a',
@@ -135,6 +140,34 @@ export default function App() {
   const [messages, setMessages] = useState(() => {
     return loadConversation();
       });
+  const [conversations, setConversations] = useState(() => {
+  const saved = loadConversations();
+
+  if (saved.length > 0) {
+    return saved;
+  }
+
+  return [
+    {
+      id: crypto.randomUUID(),
+      title: "新的聊天",
+      messages: [],
+      createdAt: Date.now(),
+    }
+  ];
+});
+
+
+const [activeConversationId, setActiveConversationId] = useState(() => {
+  const saved = loadConversations();
+
+  if (saved.length > 0) {
+    return saved[0].id;
+  }
+
+  return null;
+}); 
+
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState('');
   const listRef = useRef(null);
@@ -148,6 +181,10 @@ export default function App() {
   useEffect(() => {
     saveConversation(messages);
    }, [messages]);
+
+  useEffect(() => {
+  saveConversations(conversations);
+}, [conversations]);
 
   const send = async () => {
     if (!input.trim()) return;
@@ -218,6 +255,56 @@ export default function App() {
       }} onClick={() => setPage('home')}>
         瑜 & 遇
       </div>
+
+     <div style={{
+  padding: '12px 16px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  borderBottom: `1px solid ${palette.surfaceAlt}`,
+}}>
+
+  <div style={{
+    color: palette.text,
+    fontSize: '14px',
+  }}>
+    OpenCNS 对话
+  </div>
+
+
+  <div
+    onClick={() => {
+
+      const newConversation = {
+        id: crypto.randomUUID(),
+        title: "新的聊天",
+        messages: [],
+        createdAt: Date.now(),
+      };
+
+      setConversations([
+        ...conversations,
+        newConversation
+      ]);
+
+      setActiveConversationId(
+        newConversation.id
+      );
+
+      setMessages([]);
+
+    }}
+    style={{
+      color: palette.jade,
+      cursor: 'pointer',
+      fontSize:'14px'
+    }}
+  >
+    + 新聊天
+  </div>
+
+</div>
+
 
       <div ref={listRef} style={{
         flex: 1,
