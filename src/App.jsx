@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Sidebar from "./components/Sidebar";
 import { chat } from "./api/chat";
 import {
   saveConversation,
@@ -198,12 +199,99 @@ const [activeConversationId, setActiveConversationId] = useState(() => {
      history
      );
       setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
+      const updatedMessages = [
+            ...messages,
+            { role: "user", text: userMessage },
+            { role: "ai", text: data.reply },
+          ];
+
+      const updatedConversations =
+       conversations.map((item) =>
+          item.id === activeConversationId
+          ? {
+                ...item,
+               messages: updatedMessages,
+            }
+          : item
+         );
+
+      setConversations(updatedConversations);
       setHistory([...newHistory, { role: 'assistant', content: data.reply }]);
     } catch (error) {
       setMessages((prev) => [...prev, { role: 'ai', text: '连接失败，请稍后再试。' }]);
       console.error(error);
     }
   };
+
+function handleSelectConversation(conv){
+
+  setActiveConversationId(conv.id);
+
+  setMessages(conv.messages || []);
+
+  setHistory(
+    (conv.messages || []).map(item=>({
+      role:item.role==="ai"
+        ?"assistant"
+        :"user",
+      content:item.text
+    }))
+  );
+
+}
+
+
+function handleDeleteConversation(id){
+
+  const updated=
+    conversations.filter(c=>c.id!==id);
+
+  setConversations(updated);
+
+  if(updated.length===0){
+
+    setMessages([]);
+
+    setHistory([]);
+
+    setActiveConversationId(null);
+
+    return;
+
+  }
+
+  setActiveConversationId(
+    updated[0].id
+  );
+
+  setMessages(
+    updated[0].messages || []
+  );
+
+}
+
+
+function handleRenameConversation(
+  id,
+  title
+){
+
+  setConversations(
+
+    conversations.map(c=>
+
+      c.id===id
+      ?{
+          ...c,
+          title
+       }
+      :c
+
+    )
+
+  );
+
+}
 
   if (page === 'home') return <HomePage onEnter={() => setPage('chat')} />;
 
@@ -212,7 +300,7 @@ const [activeConversationId, setActiveConversationId] = useState(() => {
       width: '100%',
       height: '100dvh',
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
       position: 'relative',
       background: palette.bg,
       color: palette.text,
@@ -243,6 +331,37 @@ const [activeConversationId, setActiveConversationId] = useState(() => {
         zIndex: 0,
       }} />
 
+<Sidebar
+  conversations={conversations}
+  currentId={activeConversationId}
+  onNew={() => {
+
+    const newConversation = {
+      id: crypto.randomUUID(),
+      title: "新的聊天",
+      messages: [],
+      createdAt: Date.now(),
+    };
+
+    const updated = [
+      ...conversations,
+      newConversation
+    ];
+
+    setConversations(updated);
+
+    setActiveConversationId(newConversation.id);
+
+    setMessages([]);
+
+    setHistory([]);
+
+  }}
+  onSelect={handleSelectConversation}
+  onDelete={handleDeleteConversation}
+  onRename={handleRenameConversation}
+/>
+
       <div style={{
         padding: '16px',
         textAlign: 'center',
@@ -269,38 +388,6 @@ const [activeConversationId, setActiveConversationId] = useState(() => {
     fontSize: '14px',
   }}>
     OpenCNS 对话
-  </div>
-
-
-  <div
-    onClick={() => {
-
-      const newConversation = {
-        id: crypto.randomUUID(),
-        title: "新的聊天",
-        messages: [],
-        createdAt: Date.now(),
-      };
-
-      setConversations([
-        ...conversations,
-        newConversation
-      ]);
-
-      setActiveConversationId(
-        newConversation.id
-      );
-
-      setMessages([]);
-
-    }}
-    style={{
-      color: palette.jade,
-      cursor: 'pointer',
-      fontSize:'14px'
-    }}
-  >
-    + 新聊天
   </div>
 
 </div>
